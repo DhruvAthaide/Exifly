@@ -142,15 +142,17 @@ public class MainActivity extends AppCompatActivity {
                          filename = "clean_" + System.currentTimeMillis() + "_" + index + ".jpg";
                     }
 
-                    MetadataManager.stripExif(
+                    Uri resultUri = MetadataManager.stripExif(
                             this,
                             item.getUri(),
                             filename
                     );
 
-                    runOnUiThread(() ->
-                            adapter.updateStatus(index, ImageModel.STATUS_CLEANED)
-                    );
+                    runOnUiThread(() -> {
+                        item.setCleanedUri(resultUri);
+                        adapter.updateStatus(index, ImageModel.STATUS_CLEANED);
+                        updateShareFabVisibility();
+                    });
 
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -166,6 +168,96 @@ public class MainActivity extends AppCompatActivity {
             binding.lottie.setVisibility(LottieAnimationView.GONE);
         }, 2000);
     }
+
+    private void updateShareFabVisibility() {
+        boolean hasCleaned = false;
+        for (ImageModel item : adapter.getItems()) {
+            if (item.getStatus() == ImageModel.STATUS_CLEANED) {
+                hasCleaned = true;
+                break;
+            }
+        }
+        if (hasCleaned) {
+             binding.shareAllFab.setVisibility(android.view.View.VISIBLE);
+        } else {
+             binding.shareAllFab.setVisibility(android.view.View.GONE);
+        }
+    }
+
+    private void showMetadataDialog(ImageModel item) {
+        com.google.android.material.bottomsheet.BottomSheetDialog dialog = 
+            new com.google.android.material.bottomsheet.BottomSheetDialog(this);
+        dialog.setContentView(R.layout.sheet_metadata);
+        
+        android.widget.ImageView thumb = dialog.findViewById(R.id.sheetThumb);
+        android.widget.TextView model = dialog.findViewById(R.id.sheetModel);
+        android.widget.TextView date = dialog.findViewById(R.id.sheetDate);
+        android.widget.TextView gps = dialog.findViewById(R.id.sheetGps);
+        android.widget.Button close = dialog.findViewById(R.id.btnClose);
+        android.widget.Button share = dialog.findViewById(R.id.btnShare);
+        com.google.android.material.button.MaterialButton openMap = dialog.findViewById(R.id.btnOpenMap);
+
+        if (thumb != null) thumb.setImageURI(item.getUri());
+        
+        MetadataInfo meta = item.getMetadata();
+        if (meta != null) {
+            model.setText(meta.deviceModel != null ? meta.deviceModel : "Unknown Device");
+            date.setText(meta.dateTime != null ? meta.dateTime : "No Date");
+            gps.setText(meta.gpsCoordinates != null ? meta.gpsCoordinates : "No GPS Data");
+            
+            if (meta.gpsCoordinates != null) {
+                openMap.setVisibility(android.view.View.VISIBLE);
+                openMap.setOnClickListener(v -> {
+                    // geo:lat,lon
+                   Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("geo:" + meta.gpsCoordinates));
+                   try { startActivity(intent); } catch (Exception ignored) {}
+                });
+            } else {
+                openMap.setVisibility(android.view.View.GONE);
+            }
+        }
+
+        if (share != null) {
+            if (item.getStatus() == ImageModel.STATUS_CLEANED && item.getCleanedUri() != null) {
+                share.setText("Share Cleaned Image");
+                share.setOnClickListener(v -> shareImage(item.getCleanedUri()));
+            } else {
+                share.setText("Share Original");
+                share.setOnClickListener(v -> shareImage(item.getUri()));
+            }
+        }
+
+        if (close != null) close.setOnClickListener(v -> dialog.dismiss());
+        
+        dialog.show();
+    }
+
+    private void shareImage(Uri uri) {
+        Intent shareIntent = new Intent(Intent.ACTION_SEND);
+        shareIntent.setType("image/jpeg");
+        shareIntent.putExtra(Intent.EXTRA_STREAM, uri);
+        shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        startActivity(Intent.createChooser(shareIntent, "Share Image"));
+    }
+
+    private void shareAllCleanedImages() {
+        java.util.ArrayList<Uri> uris = new java.util.ArrayList<>();
+        for (ImageModel item : adapter.getItems()) {
+            if (item.getStatus() == ImageModel.STATUS_CLEANED && item.getCleanedUri() != null) {
+                uris.add(item.getCleanedUri());
+            }
+        }
+        
+        if (uris.isEmpty()) return;
+
+        Intent shareIntent = new Intent(Intent.ACTION_SEND_MULTIPLE);
+        shareIntent.setType("image/jpeg");
+        shareIntent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, uris);
+        shareIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        startActivity(Intent.createChooser(shareIntent, "Share All Cleaned Images"));
+    }
+
+
 
     private void animateImageAdded() {
         binding.recyclerView.animate()

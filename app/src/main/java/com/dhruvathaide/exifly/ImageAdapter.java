@@ -23,6 +23,16 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ViewHolder> 
         }
     }
 
+    public interface OnItemClickListener {
+        void onItemClick(ImageModel item);
+    }
+    
+    private OnItemClickListener listener;
+    
+    public void setOnItemClickListener(OnItemClickListener listener) {
+        this.listener = listener;
+    }
+
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(
@@ -85,6 +95,12 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ViewHolder> 
             
             h.binding.metadataBadges.setText(sb.toString());
         }
+
+        h.itemView.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onItemClick(item);
+            }
+        });
     }
 
     @Override

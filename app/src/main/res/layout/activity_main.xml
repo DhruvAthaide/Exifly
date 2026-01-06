@@ -222,7 +222,20 @@
                 android:visibility="gone"
                 app:lottie_rawRes="@raw/cleaning"/>
         </FrameLayout>
-        
+
     </LinearLayout>
+
+    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+        android:id="@+id/shareAllFab"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="16dp"
+        android:text="Share All"
+        app:icon="@android:drawable/ic_menu_share"
+        android:backgroundTint="#FFFFFF"
+        android:textColor="#000000"
+        app:iconTint="#000000"
+        android:visibility="gone"/>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

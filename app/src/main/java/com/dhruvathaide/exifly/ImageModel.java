@@ -32,6 +32,16 @@ public class ImageModel {
         return status;
     }
 
+    private Uri cleanedUri;
+
+    public Uri getCleanedUri() {
+        return cleanedUri;
+    }
+
+    public void setCleanedUri(Uri cleanedUri) {
+        this.cleanedUri = cleanedUri;
+    }
+
     public void setStatus(int status) {
         this.status = status;
     }
