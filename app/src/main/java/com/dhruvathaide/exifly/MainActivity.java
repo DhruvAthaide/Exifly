@@ -60,12 +60,16 @@ public class MainActivity extends AppCompatActivity {
 
         adapter = new ImageAdapter();
         binding.recyclerView.setLayoutManager(
-                new LinearLayoutManager(this)
+                new androidx.recyclerview.widget.GridLayoutManager(this, 3)
         );
         binding.recyclerView.setAdapter(adapter);
 
         binding.selectArea.setOnClickListener(v -> openImagePicker());
         binding.cleanButton.setOnClickListener(v -> cleanAllImages());
+
+        // Mock Stats for "Dashboard" feel
+        binding.statImagesCleaned.setText("128");
+        binding.statStorageSaved.setText("45 MB");
         
         handleIncomingIntent(getIntent());
     }
@@ -118,6 +122,8 @@ public class MainActivity extends AppCompatActivity {
         binding.lottie.playAnimation();
 
         List<ImageModel> items = adapter.getItems();
+        boolean randomize = binding.switchRandomize.isChecked();
+        boolean removeDate = binding.switchRemoveDate.isChecked();
 
         for (int i = 0; i < items.size(); i++) {
             int index = i;
@@ -127,10 +133,19 @@ public class MainActivity extends AppCompatActivity {
 
             executor.execute(() -> {
                 try {
+                    String filename;
+                    if (randomize) {
+                         filename = java.util.UUID.randomUUID().toString().substring(0, 8) + ".jpg";
+                    } else if (removeDate) {
+                         filename = "clean_img_" + index + ".jpg";
+                    } else {
+                         filename = "clean_" + System.currentTimeMillis() + "_" + index + ".jpg";
+                    }
+
                     MetadataManager.stripExif(
                             this,
                             item.getUri(),
-                            "clean_" + System.currentTimeMillis() + "_" + index + ".jpg"
+                            filename
                     );
 
                     runOnUiThread(() ->
