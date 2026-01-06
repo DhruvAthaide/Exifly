@@ -60,8 +60,25 @@ public class MetadataManager {
         }
     }
     public static MetadataInfo extractMetadata(Context context, Uri uri) {
-        try (InputStream is = context.getContentResolver().openInputStream(uri)) {
-            ImageMetadata metadata = Imaging.getMetadata(is, "image.jpg");
+        try {
+            android.util.Log.d("Exifly", "Starting extraction for: " + uri);
+            byte[] imageBytes = readBytes(context, uri);
+            
+            if (imageBytes == null || imageBytes.length == 0) {
+                android.util.Log.e("Exifly", "readBytes returned empty/null");
+                return new MetadataInfo(null, null, null);
+            }
+            android.util.Log.d("Exifly", "Read bytes: " + imageBytes.length);
+
+            // Adding filename hint helps detecting format
+            ImageMetadata metadata = Imaging.getMetadata(imageBytes);
+
+            if (metadata == null) {
+                android.util.Log.e("Exifly", "Imaging.getMetadata returned null");
+                return new MetadataInfo(null, null, null);
+            }
+
+            android.util.Log.d("Exifly", "Metadata Class: " + metadata.getClass().getSimpleName());
 
             if (metadata instanceof JpegImageMetadata) {
                 JpegImageMetadata jpegMetadata = (JpegImageMetadata) metadata;
@@ -77,6 +94,7 @@ public class MetadataManager {
                         gpsInfo = String.format("%.4f, %.4f", 
                             gps.getLatitudeAsDegreesNorth(), 
                             gps.getLongitudeAsDegreesEast());
+                        android.util.Log.d("Exifly", "Found GPS: " + gpsInfo);
                     } catch (Exception e) {}
                 }
 
@@ -87,6 +105,7 @@ public class MetadataManager {
                        Object val = exif.getFieldValue(TiffTagConstants.TIFF_TAG_MODEL);
                        if (val instanceof String) model = (String) val;
                        else if (val instanceof String[]) model = ((String[]) val)[0];
+                       android.util.Log.d("Exifly", "Found Model: " + model);
                     }
                 } catch (Exception ignored) {}
 
@@ -97,14 +116,38 @@ public class MetadataManager {
                         Object val = exif.getFieldValue(ExifTagConstants.EXIF_TAG_DATE_TIME_ORIGINAL);
                         if (val instanceof String) date = (String) val;
                         else if (val instanceof String[]) date = ((String[]) val)[0];
+                        android.util.Log.d("Exifly", "Found Date: " + date);
                     }
                 } catch (Exception ignored) {}
 
                 return new MetadataInfo(gpsInfo, model, date);
+            } else {
+                android.util.Log.w("Exifly", "Not an instance of JpegImageMetadata");
             }
         } catch (Exception e) {
             e.printStackTrace();
+            android.util.Log.e("Exifly", "Extraction error", e);
         }
         return new MetadataInfo(null, null, null);
+    }
+    private static byte[] readBytes(Context context, Uri uri) throws IOException {
+        try (InputStream inputStream = context.getContentResolver().openInputStream(uri);
+             ByteArrayOutputStream byteBuffer = new ByteArrayOutputStream()) {
+            if (inputStream == null) {
+                android.util.Log.e("Exifly", "openInputStream returned null for " + uri);
+                return null;
+            }
+            
+            int bufferSize = 4096;
+            byte[] buffer = new byte[bufferSize];
+            int len;
+            while ((len = inputStream.read(buffer)) != -1) {
+                byteBuffer.write(buffer, 0, len);
+            }
+            return byteBuffer.toByteArray();
+        } catch (IOException e) {
+            android.util.Log.e("Exifly", "readBytes IOException", e);
+            throw e;
+        }
     }
 }
