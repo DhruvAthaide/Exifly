@@ -13,7 +13,10 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.airbnb.lottie.LottieAnimationView;
 import com.dhruvathaide.exifly.core.MetadataManager;
+import com.dhruvathaide.exifly.core.MetadataInfo;
 import com.dhruvathaide.exifly.databinding.ActivityMainBinding;
+
+import java.util.List;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -36,9 +39,11 @@ public class MainActivity extends AppCompatActivity {
                                 ClipData clipData = data.getClipData();
                                 for (int i = 0; i < clipData.getItemCount(); i++) {
                                     adapter.addImage(clipData.getItemAt(i).getUri());
+                                    analyzeMetadata(adapter.getItems().size() - 1);
                                 }
                             } else if (data.getData() != null) {
                                 adapter.addImage(data.getData());
+                                analyzeMetadata(adapter.getItems().size() - 1);
                             }
                             animateImageAdded();
                         }
@@ -61,6 +66,43 @@ public class MainActivity extends AppCompatActivity {
 
         binding.selectArea.setOnClickListener(v -> openImagePicker());
         binding.cleanButton.setOnClickListener(v -> cleanAllImages());
+        
+        handleIncomingIntent(getIntent());
+    }
+    
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        handleIncomingIntent(intent);
+    }
+
+    private void handleIncomingIntent(Intent intent) {
+        if (intent == null) return;
+        String action = intent.getAction();
+        String type = intent.getType();
+
+        if (Intent.ACTION_SEND.equals(action) && type != null) {
+            if (type.startsWith("image/")) {
+                Uri imageUri = intent.getParcelableExtra(Intent.EXTRA_STREAM);
+                if (imageUri != null) {
+                    adapter.addImage(imageUri);
+                    analyzeMetadata(adapter.getItems().size() - 1);
+                    animateImageAdded();
+                }
+            }
+        } else if (Intent.ACTION_SEND_MULTIPLE.equals(action) && type != null) {
+            if (type.startsWith("image/")) {
+                java.util.ArrayList<Uri> imageUris = intent.getParcelableArrayListExtra(Intent.EXTRA_STREAM);
+                if (imageUris != null) {
+                    for (Uri uri : imageUris) {
+                        adapter.addImage(uri);
+                        analyzeMetadata(adapter.getItems().size() - 1);
+                    }
+                    animateImageAdded();
+                }
+            }
+        }
     }
 
     private void openImagePicker() {
@@ -122,5 +164,18 @@ public class MainActivity extends AppCompatActivity {
                                 .setDuration(120)
                                 .start()
                 ).start();
+    }
+    private void analyzeMetadata(int index) {
+        if (index < 0 || index >= adapter.getItems().size()) return;
+        
+        ImageModel item = adapter.getItems().get(index);
+        executor.execute(() -> {
+            MetadataInfo info = MetadataManager.extractMetadata(this, item.getUri());
+            
+            runOnUiThread(() -> {
+                item.setMetadata(info);
+                adapter.notifyItemChanged(index);
+            });
+        });
     }
 }
