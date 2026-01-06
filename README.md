@@ -1,5 +1,8 @@
-# Exifly 🛡️✈️
-> **Fly light, fly safe.** The modern privacy tool for your photos.
+<div align="center">
+  <img src="app/src/main/res/mipmap-xxxhdpi/exiflylogo.webp" width="128" alt="Exifly Logo" />
+  <h1>Exifly 🛡️✈️</h1>
+  <p><b>Fly light, fly safe.</b> The modern privacy tool for your photos.</p>
+</div>
 
 **Exifly** is a powerful, offline-first Android application designed to strip sensitive EXIF metadata from your images before you share them. With a beautiful "Glassmorphism" UI and smart privacy features, it ensures your location, device details, and timestamps stay private.
 
