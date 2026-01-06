@@ -46,12 +46,44 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ViewHolder> 
         switch (item.getStatus()) {
             case ImageModel.STATUS_CLEANED:
                 h.binding.status.setText("Cleaned");
+                h.binding.status.setTextColor(0xFF4CAF50); // Green
                 break;
             case ImageModel.STATUS_FAILED:
                 h.binding.status.setText("Failed");
+                h.binding.status.setTextColor(0xFFF44336); // Red
                 break;
             default:
                 h.binding.status.setText("Pending");
+                h.binding.status.setTextColor(0xFFFFFFFF); // White
+        }
+
+        // Bind Metadata
+        com.dhruvathaide.exifly.core.MetadataInfo meta = item.getMetadata();
+        if (meta == null) {
+            h.binding.metadataBadges.setText("Analyzing...");
+        } else if (!meta.hasRisk()) {
+            h.binding.metadataBadges.setText("✅ Safe (No Metadata)");
+        } else {
+            StringBuilder sb = new StringBuilder();
+            boolean hasPrev = false;
+
+            if (meta.gpsCoordinates != null) {
+                sb.append("📍 ").append(meta.gpsCoordinates);
+                hasPrev = true;
+            }
+            if (meta.deviceModel != null) {
+                if (hasPrev) sb.append("\n"); // New line
+                sb.append("📷 ").append(meta.deviceModel.trim());
+                hasPrev = true;
+            }
+            if (meta.dateTime != null) {
+                if (hasPrev) sb.append("\n"); // New line
+                // Fix generic EXIF date format "2023:10:05 12:00:00" -> "2023-10-05 12:00"
+                String cleanDate = meta.dateTime.replaceFirst("^(\\d{4}):(\\d{2}):(\\d{2})", "$1-$2-$3");
+                sb.append("📅 ").append(cleanDate);
+            }
+            
+            h.binding.metadataBadges.setText(sb.toString());
         }
     }
 

@@ -9,10 +9,19 @@ public class ImageModel {
 
     private final Uri uri;
     private int status;
+    private com.dhruvathaide.exifly.core.MetadataInfo metadata;
 
     public ImageModel(Uri uri) {
         this.uri = uri;
         this.status = STATUS_PENDING;
+    }
+
+    public com.dhruvathaide.exifly.core.MetadataInfo getMetadata() {
+        return metadata;
+    }
+
+    public void setMetadata(com.dhruvathaide.exifly.core.MetadataInfo metadata) {
+        this.metadata = metadata;
     }
 
     public Uri getUri() {
