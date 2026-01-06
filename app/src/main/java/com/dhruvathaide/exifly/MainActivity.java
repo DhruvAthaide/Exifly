@@ -64,8 +64,16 @@ public class MainActivity extends AppCompatActivity {
         );
         binding.recyclerView.setAdapter(adapter);
 
+        adapter.setOnItemClickListener(this::showMetadataDialog);
+        adapter.setOnItemShareClickListener(item -> {
+            if (item.getCleanedUri() != null) {
+                shareImage(item.getCleanedUri());
+            }
+        });
+        
         binding.selectArea.setOnClickListener(v -> openImagePicker());
         binding.cleanButton.setOnClickListener(v -> cleanAllImages());
+        binding.shareAllFab.setOnClickListener(v -> shareAllCleanedImages());
 
         // Mock Stats for "Dashboard" feel
         binding.statImagesCleaned.setText("128");
@@ -193,6 +201,7 @@ public class MainActivity extends AppCompatActivity {
         android.widget.TextView model = dialog.findViewById(R.id.sheetModel);
         android.widget.TextView date = dialog.findViewById(R.id.sheetDate);
         android.widget.TextView gps = dialog.findViewById(R.id.sheetGps);
+        android.widget.TextView raw = dialog.findViewById(R.id.sheetRaw); // New
         android.widget.Button close = dialog.findViewById(R.id.btnClose);
         android.widget.Button share = dialog.findViewById(R.id.btnShare);
         com.google.android.material.button.MaterialButton openMap = dialog.findViewById(R.id.btnOpenMap);
@@ -204,6 +213,7 @@ public class MainActivity extends AppCompatActivity {
             model.setText(meta.deviceModel != null ? meta.deviceModel : "Unknown Device");
             date.setText(meta.dateTime != null ? meta.dateTime : "No Date");
             gps.setText(meta.gpsCoordinates != null ? meta.gpsCoordinates : "No GPS Data");
+            if (raw != null) raw.setText(meta.rawTags != null && !meta.rawTags.isEmpty() ? meta.rawTags : "No Raw Metadata Found");
             
             if (meta.gpsCoordinates != null) {
                 openMap.setVisibility(android.view.View.VISIBLE);
@@ -248,7 +258,10 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         
-        if (uris.isEmpty()) return;
+        if (uris.isEmpty()) {
+            android.widget.Toast.makeText(this, "No cleaned images available to share.", android.widget.Toast.LENGTH_SHORT).show();
+            return;
+        }
 
         Intent shareIntent = new Intent(Intent.ACTION_SEND_MULTIPLE);
         shareIntent.setType("image/jpeg");

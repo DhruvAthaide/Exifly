@@ -118,6 +118,31 @@
         android:visibility="gone"
         style="@style/Widget.MaterialComponents.Button.TextButton"/>
 
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="RAW METADATA"
+        android:textColor="#88FFFFFF"
+        android:textSize="10sp"
+        android:textStyle="bold" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="120dp"
+        android:background="#11FFFFFF"
+        android:layout_marginTop="8dp"
+        android:padding="8dp">
+        <TextView
+            android:id="@+id/sheetRaw"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="No Tags Found"
+            android:textColor="#CCCCFF"
+            android:textSize="11sp"
+            android:fontFamily="monospace"/>
+    </ScrollView>
+
     <!-- Actions -->
     <LinearLayout
         android:layout_width="match_parent"

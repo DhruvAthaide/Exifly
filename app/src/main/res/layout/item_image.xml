@@ -49,6 +49,19 @@
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintEnd_toEndOf="parent"/>
 
+        <ImageButton
+            android:id="@+id/btnItemShare"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:src="@android:drawable/ic_menu_share"
+            android:background="@drawable/glass_card_bg"
+            android:padding="6dp"
+            android:layout_margin="8dp"
+            app:tint="#FFFFFF"
+            android:visibility="gone"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"/>
+
         <TextView
             android:id="@+id/metadataBadges"
             android:layout_width="0dp"

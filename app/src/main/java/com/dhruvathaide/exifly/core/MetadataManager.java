@@ -66,7 +66,7 @@ public class MetadataManager {
             
             if (imageBytes == null || imageBytes.length == 0) {
                 android.util.Log.e("Exifly", "readBytes returned empty/null");
-                return new MetadataInfo(null, null, null);
+                return new MetadataInfo(null, null, null, null);
             }
             android.util.Log.d("Exifly", "Read bytes: " + imageBytes.length);
 
@@ -75,7 +75,7 @@ public class MetadataManager {
 
             if (metadata == null) {
                 android.util.Log.e("Exifly", "Imaging.getMetadata returned null");
-                return new MetadataInfo(null, null, null);
+                return new MetadataInfo(null, null, null, null);
             }
 
             android.util.Log.d("Exifly", "Metadata Class: " + metadata.getClass().getSimpleName());
@@ -145,7 +145,21 @@ public class MetadataManager {
                     }
                 } catch (Exception ignored) {}
 
-                return new MetadataInfo(gpsInfo, model, date);
+                // 4. Raw Tags Report
+                StringBuilder rawReport = new StringBuilder();
+                try {
+                    if (exif != null) {
+                        java.util.List<? extends org.apache.commons.imaging.formats.tiff.TiffField> fields = exif.getAllFields();
+                        for (org.apache.commons.imaging.formats.tiff.TiffField field : fields) {
+                             rawReport.append(field.getTagName())
+                                      .append(": ")
+                                      .append(field.getValueDescription())
+                                      .append("\n");
+                        }
+                    }
+                } catch (Exception ignored) {}
+                
+                return new MetadataInfo(gpsInfo, model, date, rawReport.toString());
             } else {
                 android.util.Log.w("Exifly", "Not an instance of JpegImageMetadata");
             }
@@ -153,7 +167,7 @@ public class MetadataManager {
             e.printStackTrace();
             android.util.Log.e("Exifly", "Extraction error", e);
         }
-        return new MetadataInfo(null, null, null);
+        return new MetadataInfo(null, null, null, null);
     }
     private static byte[] readBytes(Context context, Uri uri) throws IOException {
         try (InputStream inputStream = context.getContentResolver().openInputStream(uri);

@@ -26,11 +26,20 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ViewHolder> 
     public interface OnItemClickListener {
         void onItemClick(ImageModel item);
     }
+
+    public interface OnItemShareClickListener {
+        void onItemShareClick(ImageModel item);
+    }
     
     private OnItemClickListener listener;
+    private OnItemShareClickListener shareListener;
     
     public void setOnItemClickListener(OnItemClickListener listener) {
         this.listener = listener;
+    }
+
+    public void setOnItemShareClickListener(OnItemShareClickListener listener) {
+        this.shareListener = listener;
     }
 
     @NonNull
@@ -52,6 +61,16 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ViewHolder> 
     public void onBindViewHolder(@NonNull ViewHolder h, int position) {
         ImageModel item = items.get(position);
         h.binding.imageThumb.setImageURI(item.getUri());
+        
+        // Share Button Visibility
+        if (item.getStatus() == ImageModel.STATUS_CLEANED) {
+            h.binding.btnItemShare.setVisibility(android.view.View.VISIBLE);
+            h.binding.btnItemShare.setOnClickListener(v -> {
+                if (shareListener != null) shareListener.onItemShareClick(item);
+            });
+        } else {
+            h.binding.btnItemShare.setVisibility(android.view.View.GONE);
+        }
         
         switch (item.getStatus()) {
             case ImageModel.STATUS_CLEANED:
