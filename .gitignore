@@ -13,3 +13,7 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Keystore files
+exifly-keystore.jks
+exifly-keystore.txt
