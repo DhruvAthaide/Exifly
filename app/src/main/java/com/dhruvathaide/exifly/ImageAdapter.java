@@ -13,8 +13,7 @@ import java.util.*;
 
 public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ViewHolder> {
 
-    private final List<Uri> images = new ArrayList<>();
-    private final Set<Integer> cleanedIndexes = new HashSet<>();
+    private final List<ImageModel> items = new ArrayList<>();
 
     static class ViewHolder extends RecyclerView.ViewHolder {
         ItemImageBinding binding;
@@ -41,30 +40,39 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ViewHolder> 
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder h, int position) {
-        h.binding.imageThumb.setImageURI(images.get(position));
-        h.binding.status.setText(
-                cleanedIndexes.contains(position)
-                        ? "Cleaned"
-                        : "Pending"
-        );
+        ImageModel item = items.get(position);
+        h.binding.imageThumb.setImageURI(item.getUri());
+        
+        switch (item.getStatus()) {
+            case ImageModel.STATUS_CLEANED:
+                h.binding.status.setText("Cleaned");
+                break;
+            case ImageModel.STATUS_FAILED:
+                h.binding.status.setText("Failed");
+                break;
+            default:
+                h.binding.status.setText("Pending");
+        }
     }
 
     @Override
     public int getItemCount() {
-        return images.size();
+        return items.size();
     }
 
     public void addImage(Uri uri) {
-        images.add(uri);
-        notifyItemInserted(images.size() - 1);
+        items.add(new ImageModel(uri));
+        notifyItemInserted(items.size() - 1);
     }
 
-    public List<Uri> getImages() {
-        return images;
+    public List<ImageModel> getItems() {
+        return items;
     }
 
-    public void markCleaned(int index) {
-        cleanedIndexes.add(index);
-        notifyItemChanged(index);
+    public void updateStatus(int position, int status) {
+        if (position >= 0 && position < items.size()) {
+            items.get(position).setStatus(status);
+            notifyItemChanged(position);
+        }
     }
 }

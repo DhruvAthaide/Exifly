@@ -1,5 +1,6 @@
 package com.dhruvathaide.exifly;
 
+import android.content.ClipData;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -30,8 +31,15 @@ public class MainActivity extends AppCompatActivity {
                         if (result.getResultCode() == RESULT_OK &&
                                 result.getData() != null) {
 
-                            Uri imageUri = result.getData().getData();
-                            adapter.addImage(imageUri);
+                            Intent data = result.getData();
+                            if (data.getClipData() != null) {
+                                ClipData clipData = data.getClipData();
+                                for (int i = 0; i < clipData.getItemCount(); i++) {
+                                    adapter.addImage(clipData.getItemAt(i).getUri());
+                                }
+                            } else if (data.getData() != null) {
+                                adapter.addImage(data.getData());
+                            }
                             animateImageAdded();
                         }
                     }
@@ -58,6 +66,7 @@ public class MainActivity extends AppCompatActivity {
     private void openImagePicker() {
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
         intent.setType("image/*");
+        intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
         imagePicker.launch(intent);
     }
@@ -66,21 +75,32 @@ public class MainActivity extends AppCompatActivity {
         binding.lottie.setVisibility(LottieAnimationView.VISIBLE);
         binding.lottie.playAnimation();
 
-        for (int i = 0; i < adapter.getImages().size(); i++) {
+        List<ImageModel> items = adapter.getItems();
+
+        for (int i = 0; i < items.size(); i++) {
             int index = i;
+            ImageModel item = items.get(i);
+            
+            if (item.getStatus() == ImageModel.STATUS_CLEANED) continue;
+
             executor.execute(() -> {
                 try {
                     MetadataManager.stripExif(
                             this,
-                            adapter.getImages().get(index),
-                            "clean_" + System.currentTimeMillis() + ".jpg"
+                            item.getUri(),
+                            "clean_" + System.currentTimeMillis() + "_" + index + ".jpg"
                     );
 
                     runOnUiThread(() ->
-                            adapter.markCleaned(index)
+                            adapter.updateStatus(index, ImageModel.STATUS_CLEANED)
                     );
 
-                } catch (Exception ignored) {}
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    runOnUiThread(() ->
+                            adapter.updateStatus(index, ImageModel.STATUS_FAILED)
+                    );
+                }
             });
         }
 

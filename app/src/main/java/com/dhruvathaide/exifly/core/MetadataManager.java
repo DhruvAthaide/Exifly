@@ -19,13 +19,8 @@ public class MetadataManager {
     ) throws Exception {
 
         ContentResolver resolver = context.getContentResolver();
-
-        InputStream input = resolver.openInputStream(sourceUri);
-        ByteArrayOutputStream cleaned = new ByteArrayOutputStream();
-
-        new ExifRewriter().removeExifMetadata(input, cleaned);
-        input.close();
-
+        
+        // 1. Prepare Output Destination
         ContentValues values = new ContentValues();
         values.put(MediaStore.Images.Media.DISPLAY_NAME, outputName);
         values.put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg");
@@ -39,11 +34,23 @@ public class MetadataManager {
                 values
         );
 
-        OutputStream out = resolver.openOutputStream(outputUri);
-        out.write(cleaned.toByteArray());
-        out.flush();
-        out.close();
+        if (outputUri == null) {
+            throw new IOException("Failed to create MediaStore entry");
+        }
 
-        return outputUri;
+        try (InputStream input = resolver.openInputStream(sourceUri);
+             OutputStream out = resolver.openOutputStream(outputUri)) {
+
+            // 2. Stream directly from Input to Output via ExifRewriter
+            // This avoids loading the whole image into RAM
+            new ExifRewriter().removeExifMetadata(input, out);
+            
+            return outputUri;
+
+        } catch (Exception e) {
+            // Cleanup on failure to avoid 0-byte ghost files
+            resolver.delete(outputUri, null, null);
+            throw e;
+        }
     }
 }
